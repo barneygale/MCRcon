@@ -12,8 +12,8 @@ r = mcrcon.MCRcon(host, port, pwd)
 print "Logged in successfully"
 
 try:
-	while True:
-		line = raw_input('Rcon: ')
-		print r.send(line)
+    while True:
+        line = raw_input('Rcon: ')
+        print r.send(line)
 except KeyboardInterrupt, e:
-	r.close()
+    r.close()
