@@ -4,7 +4,10 @@ import mcrcon
 print 'Ctrl-C to exit'
 host = raw_input('Host: ')
 port = raw_input('Port (25575): ')
-if port == '': port = 25575
+if port == '': 
+    port = 25575
+else: 
+    port = int(port)
 pwd  = getpass.getpass('Password: ')
 
 print "Connecting..."
