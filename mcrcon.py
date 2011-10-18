@@ -17,7 +17,7 @@ class MCRcon:
     
     def send_real(self, out_type, out_data):
         #Send the data
-        buff = struct.pack('iii', 
+        buff = struct.pack('<iii', 
             10+len(out_data),
             0,
             out_type) + out_data + "\x00\x00"
@@ -28,7 +28,7 @@ class MCRcon:
         ready = True
         while ready:
             #Receive an item
-            tmp_len, tmp_req_id, tmp_type = struct.unpack('iii', self.s.recv(12))
+            tmp_len, tmp_req_id, tmp_type = struct.unpack('<iii', self.s.recv(12))
             tmp_data = self.s.recv(tmp_len-8) #-8 because we've already read the 2nd and 3rd integer fields
 
             #Error checking
