@@ -42,7 +42,7 @@ class MCRcon:
             if tmp_req_id == -1:
                 raise Exception('auth failure')
            
-            m = re.match('^Error executing: %s \((.*)\)$' % out_data, tmp_data)
+            m = re.match('^Error executing: %s \((.*)\)$' % re.escape(out_data), tmp_data)
             if m:
                 raise Exception('command failure', m.group(1))
             
