@@ -7,7 +7,7 @@ Python wrapper for Minecraft Rcon
 1. Install MCRcon
 
   ```
-  git clone http://github.com/developius/MCRcon
+  git clone http://github.com/barneygale/MCRcon
   cd MCRcon
   sudo python setup.py install
   ```
