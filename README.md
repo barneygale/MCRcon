@@ -1,31 +1,22 @@
-python-rcon
+MCRcon
 ===========
 
-Python wrapper for MCRcon (http://github.com/barneygale/MCRcon)
+Python wrapper for Minecraft Rcon
 
 #### Getting set up ####
-1. Install python-rcon
+1. Install MCRcon
 
   ```
-  git clone http://github.com/xavbabe/python-rcon
-  cd python-rcon
+  git clone http://github.com/developius/MCRcon
+  cd MCRcon
   sudo python setup.py install
   ```
-2. Install MCRcon (needed for python-rcon)
-
-  ```
-  cd ../
-  git clone http://github.com/barneygale/MCRcon
-  cd MCRcon
-  wget https://raw.githubusercontent.com/xavbabe/python-rcon/master/setup-MCRcon.py
-  sudo python setup-MCRcon.py
-  ```
-3. Test python-rcon
+3. Test MCRcon
 
   ```python
-  from rcon import rcon
+  from mcrcon import MCRcon
   
-  server = rcon("localhost","username","password") # connect to server
+  server = MCRcon("localhost","username","password") # connect to server
   
   print(server.list()) # print currently logged in users
   ```

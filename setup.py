@@ -10,6 +10,6 @@ setup(name='MCRcon',
       description='MCRcon',
       author='F. Anderson, B. Gale',
       author_email='finnian@fxapi.co.uk, barney.gale@gmail.com',
-      url='https://github.com/developius/MCRcon',
+      url='https://github.com/barneygale/MCRcon',
       long_description=read('README.md'),
       )
