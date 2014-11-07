@@ -80,6 +80,12 @@ class MCRcon:
         return(cleanup(self.send("time set %s world" % str(newTime))))
     def day(self):
         return(self.time("day"))
+    def whitelist(self,action,user=None):
+	actions = ["add","remove","reload","on","off"]
+	if action not in actions: raise Exception("Unknown command %s %s" % (str(action),str(user)))
+	else:
+		if user: return(cleanup(self.send("whitelist %s %s" % (str(action),str(user)))))
+		else: return(cleanup(self.send("whitelist %s" % str(action))))
     def night(self):
         return(self.time("night"))
     def weather(self,newWeather):
