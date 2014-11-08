@@ -60,26 +60,26 @@ class MCRcon:
         else: ok = False
         return(ok)
     def stop(self):
-        return(self.send("stop"))
+        return(cleanup(self.send("stop")))
     def users(self):
         output = cleanup(self.send("list")).split(" ")
         return({'number':int(output[2]),'names':output[10:],'max':int(output[6])})
     def ls(self):
         return(self.users())
     def cmd(self,command):
-        return(self.send(command))
+        return(cleanup(self.send(command)))
     def reload(self):
-        return(self.send("reload"))
+        return(cleanup(self.send("reload")))
     def version(self):
-        return(self.send("version"))
+        return(cleanup(self.send("version")))
     def say(self,message):
-        return(self.send("say" + str(message)))
+        return(cleanup(self.send("say" + str(message))))
     def save(self,mode="all"):
-        return(self.send("save-%s" % str(mode)))
+        return(cleanup(self.send("save-%s" % str(mode))))
     def time(self,newTime):
         return(cleanup(self.send("time set %s world" % str(newTime))))
     def day(self):
-        return(self.time("day"))
+        return(cleanup(self.time("day")))
     def whitelist(self,action,user=None):
 	actions = ["add","remove","reload","on","off"]
 	if action not in actions: raise Exception("Unknown command %s %s" % (str(action),str(user)))
