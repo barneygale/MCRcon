@@ -3,7 +3,7 @@
 import socket, select, struct, re
 
 def cleanup(text): # because the results try to create colours and therefore have horrible characters in them
-    return(text.replace("§c","").replace("§a","").replace("§6","").replace("§4","").rstrip())
+    return(text.replace("§c","").replace("§a","").replace("§6","").replace("§4","")replace("\xc2\xa7d","").rstrip())
 
 class MCRcon:
     def __init__(self, host, port, password):
