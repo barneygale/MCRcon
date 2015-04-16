@@ -1,22 +1,11 @@
-import getpass
 import mcrcon
 
-print 'Ctrl-C to exit'
-host = raw_input('Host: ')
-port = raw_input('Port (25575): ')
-if port == '': 
-    port = 25575
-else: 
-    port = int(port)
-pwd  = getpass.getpass('Password: ')
-
-print "Connecting..."
-r = mcrcon.MCRcon(host, port, pwd)
-print "Logged in successfully"
+rcon = mcrcon.MCRcon('host', 25575, 'pass')
 
 try:
     while True:
-        line = raw_input('Rcon: ')
-        print r.send(line)
-except KeyboardInterrupt, e:
+        command = input('> ')
+        response = rcon.send(command)
+        print(response)
+except KeyboardInterrupt as e:
     r.close()
