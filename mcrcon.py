@@ -17,10 +17,7 @@ class MCRcon:
     
     def send_real(self, out_type, out_data):
         #Send the data
-        buff = struct.pack('<iii', 
-            10+len(out_data),
-            0,
-            out_type) + out_data + "\x00\x00"
+        buff = struct.pack('<iii',10+len(out_data),0,out_type) + out_data.encode('utf-8') + '\0\0'.encode('utf-8')
         self.s.send(buff)
         
         #Receive a response
@@ -29,10 +26,11 @@ class MCRcon:
         while ready:
             #Receive an item
             tmp_len, tmp_req_id, tmp_type = struct.unpack('<iii', self.s.recv(12))
-            tmp_data = self.s.recv(tmp_len-8) #-8 because we've already read the 2nd and 3rd integer fields
+            tmp_data = self.s.recv(tmp_len-8).decode('utf-8') #-8 because we've already read the 2nd and 3rd integer fields
 
             #Error checking
-            if tmp_data[-2:] != '\x00\x00':
+            if tmp_data[-2:] != '\0\0':
+                print(tmp_data[-2:])
                 raise Exception('protocol failure', 'non-null pad bytes')
             tmp_data = tmp_data[:-2]
             
@@ -42,7 +40,7 @@ class MCRcon:
             if tmp_req_id == -1:
                 raise Exception('auth failure')
            
-            m = re.match('^Error executing: %s \((.*)\)$' % re.escape(out_data), tmp_data)
+            m = re.match(r'^Error executing: %s \((.*)\)$' % re.escape(out_data), tmp_data)
             if m:
                 raise Exception('command failure', m.group(1))
             
