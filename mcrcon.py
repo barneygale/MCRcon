@@ -1,55 +1,55 @@
 import socket
 import select
 import struct
-import re
+
+
+class MCRconException(Exception):
+    pass
+
 
 class MCRcon:
-    def __init__(self, host, port, password):
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.connect((host, port))
-        self.send_real(3, password)
+    socket = None
+    def connect(self, host, port):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect((host, port))
     
-    def close(self):
-        self.s.close()
+    def disconnect(self):
+        self.socket.close()
+        self.socket = None
     
-    def send(self, command):
-        return self.send_real(2, command)
-    
-    def send_real(self, out_type, out_data):
-        #Send the data
-        buff = struct.pack('<iii', 
-            10+len(out_data),
-            0,
-            out_type) + out_data + "\x00\x00"
-        self.s.send(buff)
-        
-        #Receive a response
-        in_data = ''
-        ready = True
-        while ready:
-            #Receive an item
-            tmp_len, tmp_req_id, tmp_type = struct.unpack('<iii', self.s.recv(12))
-            tmp_data = self.s.recv(tmp_len-8) #-8 because we've already read the 2nd and 3rd integer fields
+    def send(self, out_type, out_data):
+        if self.socket is None:
+            raise MCRconException("Must connect before sending data")
 
-            #Error checking
-            if tmp_data[-2:] != '\x00\x00':
-                raise Exception('protocol failure', 'non-null pad bytes')
-            tmp_data = tmp_data[:-2]
-            
-            #if tmp_type != out_type:
-            #    raise Exception('protocol failure', 'type mis-match', tmp_type, out_type)
-           
-            if tmp_req_id == -1:
-                raise Exception('auth failure')
-           
-            m = re.match('^Error executing: %s \((.*)\)$' % re.escape(out_data), tmp_data)
-            if m:
-                raise Exception('command failure', m.group(1))
-            
-            #Append
-            in_data += tmp_data
+        # Send a request packet
+        out_payload = struct.pack('<ii', 0, out_type) + out_data.encode('utf8') + b'\x00\x00'
+        out_length = struct.pack('<i', len(out_payload))
+        self.socket.send(out_length + out_payload)
 
-            #Check if more data ready...
-            ready = select.select([self.s], [], [], 0)[0]
-        
-        return in_data
+        # Read response packets
+        in_data = ""
+        while True:
+            # Read a packet
+            in_length, = struct.unpack('<i', self.socket.recv(4))
+            in_payload = self.socket.recv(in_length)
+            in_id, in_type = struct.unpack('<ii', in_payload[:8])
+            in_data_partial, in_padding = in_payload[8:-2], in_payload[-2:]
+
+            # Sanity checks
+            if in_padding != b'\x00\x00':
+                raise MCRconException("Incorrect padding")
+            if in_id == -1:
+                raise MCRconException("Login failed")
+
+            # Record the response
+            in_data += in_data_partial.decode('utf8')
+
+            # If there's nothing more to receive, return the response
+            if len(select.select([self.socket], [], [], 0)[0]) == 0:
+                return in_data
+
+    def command(self, command):
+        return self.send(2, command)
+
+    def login(self, password):
+        return self.send(3, password)
