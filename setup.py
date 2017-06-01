@@ -3,6 +3,6 @@
 import setuptools
 
 setuptools.setup(
-    name='mcrcon'
+    name='mcrcon',
     py_modules=['mcrcon']
 )
