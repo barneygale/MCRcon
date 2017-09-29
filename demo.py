@@ -10,10 +10,7 @@ def main(host, port, password):
     rcon = mcrcon.MCRcon()
 
     print("# connecting to %s:%i..." % (host, port))
-    rcon.connect(host, port)
-
-    print("# logging in...")
-    rcon.login(password)
+    rcon.connect(host, port, password)
 
     print("# ready")
 
