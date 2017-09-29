@@ -16,6 +16,12 @@ class MCRcon:
     def disconnect(self):
         self.socket.close()
         self.socket = None
+
+    def read(self, length):
+        data = b""
+        while len(data) < length:
+            data += self.socket.recv(length - len(data))
+        return data
     
     def send(self, out_type, out_data):
         if self.socket is None:
@@ -30,8 +36,8 @@ class MCRcon:
         in_data = ""
         while True:
             # Read a packet
-            in_length, = struct.unpack('<i', self.socket.recv(4))
-            in_payload = self.socket.recv(in_length)
+            in_length, = struct.unpack('<i', self.read(4))
+            in_payload = self.read(in_length)
             in_id, in_type = struct.unpack('<ii', in_payload[:8])
             in_data_partial, in_padding = in_payload[8:-2], in_payload[-2:]
 
