@@ -7,7 +7,7 @@ class MCRconException(Exception):
     pass
 
 
-class MCRcon:
+class MCRcon(object):
     socket = None
     def connect(self, host, port, password):
         if self.socket is not None:
