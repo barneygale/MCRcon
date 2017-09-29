@@ -9,12 +9,14 @@ class MCRconException(Exception):
 
 class MCRcon(object):
     socket = None
+
     def connect(self, host, port, password):
         if self.socket is not None:
             raise MCRconException("Already connected")
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((host, port))
         self.send(3, password)
+
     def disconnect(self):
         if self.socket is None:
             raise MCRconException("Already disconnected")
