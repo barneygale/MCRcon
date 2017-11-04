@@ -28,7 +28,7 @@ class MCRcon(object):
         while len(data) < length:
             data += self.socket.recv(length - len(data))
         return data
-    
+
     def send(self, out_type, out_data):
         if self.socket is None:
             raise MCRconException("Must connect before sending data")
@@ -61,4 +61,6 @@ class MCRcon(object):
                 return in_data
 
     def command(self, command):
-        return self.send(2, command)
+        result = self.send(2, command)
+        time.sleep(0.003) # MC-72390 workaround
+        return result
