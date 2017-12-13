@@ -6,11 +6,11 @@ try: input = raw_input
 except NameError: pass
 
 
-def main(host, port, password):
+def main(host, port, password, tlsmode):
     rcon = mcrcon.MCRcon()
 
     print("# connecting to %s:%i..." % (host, port))
-    rcon.connect(host, port, password)
+    rcon.connect(host, port, password, tlsmode)
 
     print("# ready")
 
@@ -28,9 +28,10 @@ def main(host, port, password):
 if __name__ == '__main__':
     import sys
     args = sys.argv[1:]
-    if len(args) != 3:
-        print("usage: python demo.py <host> <port> <password>")
+    if len(args) != 4:
+        print("usage: python demo.py <host> <port> <password> <tlsmode>")
         sys.exit(1)
-    host, port, password = args
+    host, port, password, tlsmode = args
     port = int(port)
-    main(host, port, password)
+    tlsmode = int(tlsmode)
+    main(host, port, password, tlsmode)
