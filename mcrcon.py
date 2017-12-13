@@ -1,4 +1,5 @@
 import socket
+import ssl
 import select
 import struct
 import time
@@ -11,10 +12,22 @@ class MCRconException(Exception):
 class MCRcon(object):
     socket = None
 
-    def connect(self, host, port, password):
+    def connect(self, host, port, password, tlsmode):
         if self.socket is not None:
             raise MCRconException("Already connected")
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # Enable TLS
+        if tlsmode > 0:
+            ctx = ssl.create_default_context()
+
+            # Disable hostname and certificate verification
+            if tlsmode > 1:
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+
+            self.socket = ctx.wrap_socket(self.socket, server_hostname=host)
+
         self.socket.connect((host, port))
         self.send(3, password)
 
