@@ -3,65 +3,66 @@ import select
 import struct
 import time
 
+class McRconException(Exception):
+	pass
 
-class MCRconException(Exception):
-    pass
+class McRcon:
+	#https://wiki.vg/RCON - check packet format, if anytihing need.
 
+	def __init__(self, host, port, password):
+		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.socket.connect((host, port))
+		self.send(3, password)
 
-class MCRcon(object):
-    socket = None
+	def disconnect(self):
+		"""Close the socket"""
+		self.socket.close()
 
-    def connect(self, host, port, password):
-        if self.socket is not None:
-            raise MCRconException("Already connected")
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((host, port))
-        self.send(3, password)
+	def read(self, length):
+		"""Read bytes in length size
 
-    def disconnect(self):
-        if self.socket is None:
-            raise MCRconException("Already disconnected")
-        self.socket.close()
-        self.socket = None
+		Arguments:
+		length -- size of bytes to read
+		"""
+		data = b""
+		while len(data) < length:
+		    data += self.socket.recv(length - len(data))
+		return data
 
-    def read(self, length):
-        data = b""
-        while len(data) < length:
-            data += self.socket.recv(length - len(data))
-        return data
+	def send(self, type, data):
+		"""Send payload to server
 
-    def send(self, out_type, out_data):
-        if self.socket is None:
-            raise MCRconException("Must connect before sending data")
+		Arguments:
+		type -- 3 for login, 2 to run a command, 0 for a multi-packet response, may be int
+		data -- ASCII text, may be byte[]
+		"""
+		payload = struct.pack('<ii', 0, type) + data.encode('utf8') + b'\x00\x00'
+		length = struct.pack('<i', len(payload))
+		self.socket.send(length+payload)
 
-        # Send a request packet
-        out_payload = struct.pack('<ii', 0, out_type) + out_data.encode('utf8') + b'\x00\x00'
-        out_length = struct.pack('<i', len(out_payload))
-        self.socket.send(out_length + out_payload)
+		#Reading data s
+		out_data = ''
+		while True:
+			out_length, = struct.unpack('<i', self.read(4))  #check length
+			out_payload = self.read(out_length)  #read payload size with length
+			request_id, out_type = struct.unpack('<ii', out_payload[:8])
+			data_partial, padding = out_payload[8:-2], out_payload[-2:]
 
-        # Read response packets
-        in_data = ""
-        while True:
-            # Read a packet
-            in_length, = struct.unpack('<i', self.read(4))
-            in_payload = self.read(in_length)
-            in_id, in_type = struct.unpack('<ii', in_payload[:8])
-            in_data_partial, in_padding = in_payload[8:-2], in_payload[-2:]
+			# Sanity checks
+			if padding != b'\x00\x00':
+			    raise MCRconException("Incorrect padding")
+			if request_id == -1:
+			    raise MCRconException("Login failed")
 
-            # Sanity checks
-            if in_padding != b'\x00\x00':
-                raise MCRconException("Incorrect padding")
-            if in_id == -1:
-                raise MCRconException("Login failed")
+			# Record the response
+			out_data += data_partial.decode('utf8')
 
-            # Record the response
-            in_data += in_data_partial.decode('utf8')
+			# If there's nothing more to receive, return the response
+			if len(select.select([self.socket], [], [], 0)[0]) == 0:
+			    return out_data
 
-            # If there's nothing more to receive, return the response
-            if len(select.select([self.socket], [], [], 0)[0]) == 0:
-                return in_data
-
-    def command(self, command):
-        result = self.send(2, command)
-        time.sleep(0.003) # MC-72390 workaround
-        return result
+	def command(self, command):
+		result = self.send(2, command)
+		time.sleep(0.003) # MC-72390 workaround
+		return result
+		
