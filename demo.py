@@ -1,5 +1,9 @@
 import mcrcon
 
+# python 2 compatibility
+try: input = raw_input
+except NameError: pass
+
 def main(host, port, password):
     rcon = mcrcon.McRcon(host, port, password)
 
