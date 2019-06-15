@@ -1,67 +1,90 @@
-import socket
-import select
+import collections
 import struct
-import time
 
 
-class MCRconException(Exception):
-    pass
+bufsize = 4096
+
+Packet = collections.namedtuple("Packet", ("ident", "kind", "payload"))
 
 
-class MCRcon(object):
-    socket = None
+class IncompletePacket(Exception):
+    def __init__(self, minimum):
+        self.minimum = minimum
 
-    def connect(self, host, port, password):
-        if self.socket is not None:
-            raise MCRconException("Already connected")
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((host, port))
-        self.send(3, password)
 
-    def disconnect(self):
-        if self.socket is None:
-            raise MCRconException("Already disconnected")
-        self.socket.close()
-        self.socket = None
+def decode_packet(data):
+    """
+    Decodes a packet from the beginning of the given byte string. Returns a
+    2-tuple, where the first element is a ``Packet`` instance and the second
+    element is a byte string containing any remaining data after the packet.
+    """
 
-    def read(self, length):
-        data = b""
-        while len(data) < length:
-            data += self.socket.recv(length - len(data))
-        return data
+    if len(data) < 14:
+        raise IncompletePacket(14)
 
-    def send(self, out_type, out_data):
-        if self.socket is None:
-            raise MCRconException("Must connect before sending data")
+    length = struct.unpack("<i", data[:4])[0] + 4
+    if len(data) < length:
+        raise IncompletePacket(length)
 
-        # Send a request packet
-        out_payload = struct.pack('<ii', 0, out_type) + out_data.encode('utf8') + b'\x00\x00'
-        out_length = struct.pack('<i', len(out_payload))
-        self.socket.send(out_length + out_payload)
+    ident, kind = struct.unpack("<ii", data[4:12])
+    payload, padding = data[12:length-2], data[length-2:length]
+    assert padding == b"\x00\x00"
+    return Packet(ident, kind, payload), data[length:]
 
-        # Read response packets
-        in_data = ""
-        while True:
-            # Read a packet
-            in_length, = struct.unpack('<i', self.read(4))
-            in_payload = self.read(in_length)
-            in_id, in_type = struct.unpack('<ii', in_payload[:8])
-            in_data_partial, in_padding = in_payload[8:-2], in_payload[-2:]
 
-            # Sanity checks
-            if in_padding != b'\x00\x00':
-                raise MCRconException("Incorrect padding")
-            if in_id == -1:
-                raise MCRconException("Login failed")
+def encode_packet(packet):
+    """
+    Encodes a packet from the given ``Packet` instance. Returns a byte string.
+    """
 
-            # Record the response
-            in_data += in_data_partial.decode('utf8')
+    data = struct.pack("<ii", packet.ident, packet.kind) + packet.payload + b"\x00\x00"
+    return struct.pack("<i", len(data)) + data
 
-            # If there's nothing more to receive, return the response
-            if len(select.select([self.socket], [], [], 0)[0]) == 0:
-                return in_data
 
-    def command(self, command):
-        result = self.send(2, command)
-        time.sleep(0.003) # MC-72390 workaround
-        return result
+def receive_packet(sock):
+    """
+    Receive a packet from the given socket. Returns a ``Packet`` instance.
+    """
+
+    data = b""
+    while True:
+        try:
+            return decode_packet(data)[0]
+        except IncompletePacket as exc:
+            while len(data) < exc.minimum:
+                data += sock.recv(exc.minimum - len(data))
+
+
+def send_packet(sock, packet):
+    """
+    Send a packet to the given socket.
+    """
+
+    sock.sendall(encode_packet(packet))
+
+
+def login(sock, password):
+    """
+    Send a "login" packet to the server. Returns a boolean indicating whether
+    the login was successful.
+    """
+
+    send_packet(sock, Packet(0, 3, password.encode("utf8")))
+    packet = receive_packet(sock)
+    return packet.ident == 0
+
+
+def command(sock, text):
+    """
+    Sends a "command" packet to the server. Returns the response as a string.
+    """
+
+    send_packet(sock, Packet(0, 2, text.encode("utf8")))
+    send_packet(sock, Packet(1, 0, b""))
+    response = b""
+    while True:
+        packet = receive_packet(sock)
+        if packet.ident != 0:
+            break
+        response += packet.payload
+    return response.decode("utf8")

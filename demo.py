@@ -1,36 +1,43 @@
+from __future__ import print_function
+import argparse
+import socket
 import mcrcon
 
 
 # python 2 compatibility
-try: input = raw_input
-except NameError: pass
+try:
+    input = raw_input
+except NameError:
+    pass
 
 
-def main(host, port, password):
-    rcon = mcrcon.MCRcon()
 
-    print("# connecting to %s:%i..." % (host, port))
-    rcon.connect(host, port, password)
+def main():
+    # Parse arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("host")
+    parser.add_argument("port", type=int)
+    parser.add_argument("password")
+    args = parser.parse_args()
 
-    print("# ready")
+    # Connect
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((args.host, args.port))
 
     try:
+        # Log in
+        result = mcrcon.login(sock, args.password)
+        if not result:
+            print("Incorrect rcon password")
+            return
+
+        # Start looping
         while True:
-            response = rcon.command(input('> '))
-            if response:
-                print("  %s" % response)
-
-    except KeyboardInterrupt:
-        print("\n# disconnecting...")
-        rcon.disconnect()
-
+            request = input()
+            response = mcrcon.command(sock, request)
+            print(response)
+    finally:
+        sock.close()
 
 if __name__ == '__main__':
-    import sys
-    args = sys.argv[1:]
-    if len(args) != 3:
-        print("usage: python demo.py <host> <port> <password>")
-        sys.exit(1)
-    host, port, password = args
-    port = int(port)
-    main(host, port, password)
+    main()
