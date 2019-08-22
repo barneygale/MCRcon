@@ -1,4 +1,4 @@
-from __future__ import print_function
+#from __future__ import print_function
 import argparse
 import socket
 import mcrcon
@@ -34,7 +34,7 @@ def main():
         # Send lines from stdin
         for line in sys.stdin:
             print(line)
-            response = mcrcon.command(sock, line)
+            response = mcrcon.command(sock, line.rstrip())
             print(response)
     finally:
         sock.close()
