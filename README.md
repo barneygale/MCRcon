@@ -1,9 +1,24 @@
-# MCRcon
+# MCRcon UI
 
-Straightforward implementation of Minecraft's
-[Rcon protocol](http://wiki.vg/Rcon) in Python.
+if you are not windows user
+you can run it by source code
 
-* `mcrcon.py` is a module you can import from your own python code to send
-  commands to a minecraft server and read responses.
-* `demo.py` is a simple command-line client that lets you do the above without
-  writing any code.
+First, you need to install requierments
+you can use
+```bash
+pip install PySimpleGUIWx, configparser
+```
+or
+```bash
+pip install -r requierments.txt
+```
+
+Second, download following files
+1. mcrcon.py
+2. ui.py
+and execute ui.py (`$ python ui.py`)
+
+if you are windows user
+you can go to assets and download exe version
+or you can also execute source code
+but you have to download mcrcon.py, too.
