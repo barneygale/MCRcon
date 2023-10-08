@@ -11,6 +11,7 @@ config_file = "config.ini"
 sock = None
 saved_host = None
 saved_port = None
+version = 1.1
 
 # read config
 config = configparser.ConfigParser()
@@ -49,17 +50,17 @@ manager_layout = [
     [sg.Text("Minecraft RCON Manager", font=("Segoe UI", 12))],
     [sg.Output(size=(80, 20), font=("Cascadia Mono", 12))],
     [sg.Text("Command", font=("Segoe UI", 12)), sg.InputText(key="-COMMAND-", font=("Cascadia Mono", 12), focus=True, size=(70, 1))],
-    [sg.Button("Send", font=("Segoe UI", 12))],
+    [sg.Button("Up"), sg.Button("Down"), sg.Button("Send", font=("Segoe UI", 12))],
 ]
 
 # create manager window
 def create_manager_window():
-    return sg.Window("MCRcon GUI - manage", manager_layout)
+    return sg.Window("MCRcon GUI - manage", manager_layout, resizable=False)
 
 
 while True:
     # create login_window in every loop if login_window is not defined
-    login_window = sg.Window("MCRcon GUI - login", login_layout)
+    login_window = sg.Window("MCRcon GUI - login", login_layout, resizable=False)
 
     # read window
     login_event, login_values = login_window.read()
@@ -97,11 +98,26 @@ while True:
                         break
                     elif manager_event == "Send":
                         manager_window["-COMMAND-"].update("")
+                        used_command_list.append(manager_values["-COMMAND-"])
+                        lenth = len(used_command_list)
+                        line = lenth
                         if sock:
                             command = manager_values["-COMMAND-"]
-                            manager_window["-COMMAND-"].update()
+
                             response = mcrcon.command(sock, command)
                             print(response)
+                    elif manager_event == "Up":
+                        try:
+                            line -= 1
+                            manager_window["-COMMAND-"].update(used_command_list[line])
+                        except:
+                            pass
+                    elif manager_event == "Down":
+                        try:
+                            line += 1
+                            manager_window["-COMMAND-"].update(used_command_list[line])
+                        except:
+                            pass
 
             else:
                 encoded_password = ""
