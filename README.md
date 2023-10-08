@@ -21,4 +21,3 @@ and execute ui.py (`$ python ui.py`)
 if you are windows user
 you can go to assets and download exe version
 or you can also execute source code
-but you have to download mcrcon.py, too.
