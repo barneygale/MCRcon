@@ -1,66 +1,79 @@
 import socket
 import mcrcon
-import PySimpleGUIWx as sg
 import configparser
 from os.path import exists
+import os_judge, sys
 
-# var ini
-sg.theme("SystemDefaultForReal")
-used_command_list = []
 config_file = "config.ini"
-sock = None
-saved_host = None
-saved_port = None
-version = 1.1
-
-# read config
 config = configparser.ConfigParser()
 config.read(config_file)
 
-
-"""
-if not config.ini
-create config.ini 
-"""
-if not exists("config.ini"):
+if not exists(config_file):
+    # userinfo
     config.add_section("Login_Data")
     config.set("Login_Data", "host" , "")
     config.set("Login_Data", "port", "25575")
+
+    # config
+    config.add_section("Config")
+    config.set("Config", "Default_Font", "Noto Sans TC")
 
     with open(config_file, "w") as configfile:
         config.write(configfile)
         configfile.close()
 
 
+# customize for different platform
+os = os_judge.judge(sys.platform)
+if os == "Windows":
+    import PySimpleGUIWx as sg
+elif os == "MacOS" or "Linux" or "aix" or "unknown":
+    import PySimpleGUI as sg
+
+
+# var ini
+sg.theme("SystemDefaultForReal")
+used_command_list = []
+sock = None
+saved_host = None
+saved_port = None
+version = 1.2
+
+
+# Read saved config
+DeFont = config.get("Config", "Default_Font")
 saved_host = config.get("Login_Data", "host")
 saved_port = config.get("Login_Data", "port")
 
 
 # define layout
-login_layout = [
-                [sg.Text("Minecraft RCON login", font=("Segoe UI", 12))],
-                [sg.Text("Host"), sg.InputText(key="-HOST-", default_text=saved_host, font=("Segoe UI", 12))],
-                [sg.Text("Port"), sg.InputText(key="-PORT-", default_text=str(saved_port), font=("Segoe UI", 12))],
-                [sg.Text("Password"), sg.InputText(key="-PASSWORD-", password_char="*", font=("Segoe UI", 12))],
-                [sg.Button("Connect")],
-]
+def make_window(type):
+    login_layout = [
+                    [sg.Text("Minecraft RCON login", font=(DeFont, 12))],
+                    [sg.Text("Host"), sg.InputText(key="-HOST-", default_text=saved_host, font=(DeFont, 12))],
+                    [sg.Text("Port"), sg.InputText(key="-PORT-", default_text=str(saved_port), font=(DeFont, 12))],
+                    [sg.Text("Password"), sg.InputText(key="-PASSWORD-", password_char="*", font=(DeFont, 12))],
+                    [sg.Button("Connect")],
+    ]
 
 
-manager_layout = [
-    [sg.Text("Minecraft RCON Manager", font=("Segoe UI", 12))],
-    [sg.Output(size=(80, 20), font=("Cascadia Mono", 12))],
-    [sg.Text("Command", font=("Segoe UI", 12)), sg.InputText(key="-COMMAND-", font=("Cascadia Mono", 12), focus=True, size=(70, 1))],
-    [sg.Button("Up"), sg.Button("Down"), sg.Button("Send", font=("Segoe UI", 12))],
-]
-
-# create manager window
-def create_manager_window():
-    return sg.Window("MCRcon GUI - manage", manager_layout, resizable=False)
+    manager_layout = [
+        [sg.Text("Minecraft RCON Manager", font=(DeFont, 12))],
+        [sg.Output(size=(80, 20), font=("Cascadia Mono", 12))],
+        [sg.Text("Command", font=(DeFont, 12)), sg.InputText(key="-COMMAND-", font=("Cascadia Mono", 12), focus=True, size=(70, 1))],
+        [sg.Button("Up"), sg.Button("Down"), sg.Button("Send", font=(DeFont, 12))],
+    ]
+    if type == "login":
+        login_window = sg.Window("MCRcon GUI - login", login_layout, resizable=False)
+        return login_window
+    if type == "manager":
+        manager_window = sg.Window("MCRcon GUI - manage", manager_layout, resizable=False)
+        return manager_window
 
 
 while True:
     # create login_window in every loop if login_window is not defined
-    login_window = sg.Window("MCRcon GUI - login", login_layout, resizable=False)
+    login_window = make_window("login")
 
     # read window
     login_event, login_values = login_window.read()
@@ -87,7 +100,7 @@ while True:
                     config.write(configfile)
                     configfile.close()
 
-                manager_window = create_manager_window()
+                manager_window = make_window("manager")
 
                 while True:
                     manager_event, manager_values = manager_window.read()
@@ -117,7 +130,7 @@ while True:
                             line += 1
                             manager_window["-COMMAND-"].update(used_command_list[line])
                         except:
-                            pass
+                            manager_window["-COMMAND-"].update("")
 
             else:
                 encoded_password = ""
