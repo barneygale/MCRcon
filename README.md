@@ -1,23 +1,30 @@
-# MCRcon UI
+# MCRcon GUI
 
-if you are not windows user
-you can run it by source code
+### Windows user
+Go to [[Releases]](https://github.com/Tsaitou7361/MCRcon-GUI/releases/)
+and download Windows ver.
 
-First, you need to install requierments
-you can use
-```bash
-pip install PySimpleGUIWx, configparser
-```
-or
-```bash
-pip install -r requierments.txt
-```
+decompress it into C:\Users\Username\AppData\Local\Programs\MCRCon-GUI
 
-Second, download following files
-1. mcrcon.py
-2. ui.py
-and execute ui.py (`$ python ui.py`)
 
-if you are windows user
-you can go to assets and download exe version
-or you can also execute source code
+### MacOS and Linux user
+Go to [[Releases]](https://github.com/Tsaitou7361/MCRcon-GUI/releases/)
+and download mac/linux ver.
+
+but you have to build a Python Runtime Env.
+
+1. Make sure Python is installed on your computer.
+
+2. Run this command to install every package we need.
+
+    ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Have fun :D
+    ```bash
+   python3 ui.py
+   ```
+
+#### This documentation is for MCRcon-GUI 1.2
+#### Copyleft by [Tsaitou7361](https://github.com/Tsaitou7361)
