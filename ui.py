@@ -2,7 +2,7 @@ import socket
 import mcrcon
 import configparser
 from os.path import exists
-import os_judge, sys
+import os_detect, sys
 
 config_file = "config.ini"
 config = configparser.ConfigParser()
@@ -24,7 +24,7 @@ if not exists(config_file):
 
 
 # customize for different platform
-os = os_judge.judge(sys.platform)
+os = os_detect.detect(sys.platform)
 if os == "Windows":
     import PySimpleGUIWx as sg
 elif os == "MacOS" or "Linux" or "aix" or "unknown":
