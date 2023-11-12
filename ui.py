@@ -3,25 +3,11 @@ import mcrcon
 import configparser
 from os.path import exists
 import os_detect, sys
+import wr_cfg
 
 config_file = "config.ini"
-config = configparser.ConfigParser()
-config.read(config_file)
 
-if not exists(config_file):
-    # userinfo
-    config.add_section("Login_Data")
-    config.set("Login_Data", "host" , "")
-    config.set("Login_Data", "port", "25575")
-
-    # config
-    config.add_section("Config")
-    config.set("Config", "Default_Font", "Noto Sans TC")
-
-    with open(config_file, "w") as configfile:
-        config.write(configfile)
-        configfile.close()
-
+wr_cfg.create_config(config_file)
 
 # customize for different platform
 os = os_detect.detect(sys.platform)
@@ -37,13 +23,13 @@ used_command_list = []
 sock = None
 saved_host = None
 saved_port = None
-version = 1.2
+version = wr_cfg.read_config(config_file, "Config", "Version")
 
 
 # Read saved config
-DeFont = config.get("Config", "Default_Font")
-saved_host = config.get("Login_Data", "host")
-saved_port = config.get("Login_Data", "port")
+DeFont = wr_cfg.read_config(config_file, "Config", "Default_Font")
+saved_host = wr_cfg.read_config(config_file, "Login_Data", "host")
+saved_port = wr_cfg.read_config(config_file, "Login_Data", "port")
 
 
 # define layout
@@ -56,16 +42,18 @@ def make_window(type):
                     [sg.Button("Connect")],
     ]
 
-
     manager_layout = [
         [sg.Text("Minecraft RCON Manager", font=(DeFont, 12))],
         [sg.Output(size=(80, 20), font=("Cascadia Mono", 12))],
         [sg.Text("Command", font=(DeFont, 12)), sg.InputText(key="-COMMAND-", font=("Cascadia Mono", 12), focus=True, size=(70, 1))],
         [sg.Button("Up"), sg.Button("Down"), sg.Button("Send", font=(DeFont, 12))],
     ]
+
+
     if type == "login":
         login_window = sg.Window("MCRcon GUI - login", login_layout, resizable=False)
         return login_window
+
     if type == "manager":
         manager_window = sg.Window("MCRcon GUI - manage", manager_layout, resizable=False)
         return manager_window
@@ -81,6 +69,7 @@ while True:
     # read events
     if login_event == sg.WIN_CLOSED:
         break
+
     elif login_event == "Connect":
         host = login_values["-HOST-"]
         port = int(login_values["-PORT-"])
@@ -94,11 +83,8 @@ while True:
                 sg.popup(f"successfully connect to {host}:{port}")
                 login_window.close()
 
-                config.set("Login_Data", "host", value=host)
-                config.set("Login_Data", "port", value=str(port))
-                with open(config_file, "w") as configfile:
-                    config.write(configfile)
-                    configfile.close()
+                wr_cfg.write_config(config_file, "Login_Data", "host", value=host)
+                wr_cfg.write_config(config_file, "Login_Data", "port", value=str(port))
 
                 manager_window = make_window("manager")
 
@@ -109,22 +95,26 @@ while True:
                         sock.close()
                         manager_window.close()
                         break
+
                     elif manager_event == "Send":
                         manager_window["-COMMAND-"].update("")
                         used_command_list.append(manager_values["-COMMAND-"])
                         lenth = len(used_command_list)
                         line = lenth
+
                         if sock:
                             command = manager_values["-COMMAND-"]
 
                             response = mcrcon.command(sock, command)
                             print(response)
+
                     elif manager_event == "Up":
                         try:
                             line -= 1
                             manager_window["-COMMAND-"].update(used_command_list[line])
                         except:
                             pass
+
                     elif manager_event == "Down":
                         try:
                             line += 1
